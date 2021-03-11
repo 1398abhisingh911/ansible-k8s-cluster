@@ -1,0 +1,82 @@
+---
+
+- name: INSTALL DOCKER
+  package:
+      name: docker
+      state: present
+
+- name: START DOCKER SERVICE
+  service:
+      name: docker
+      state: started
+      enabled: yes
+
+- name: Copy Kubernetes Repo File
+  copy:
+      dest: /etc/yum.repos.d/
+      src: /root/cluster/kubernetes.repo
+
+- name: YUM UPDATION
+  shell: yum repolist -y
+
+- name: INSTALL KUBEADM
+  shell: yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+
+- name: START KUBELET SERVICE
+  service:
+      name: kubelet
+      state: started
+      enabled: yes
+
+- name: COPY DAEMON.JSON
+  copy:
+      dest: /etc/docker/
+      src: /root/cluster/daemon.json
+
+- name: RESTART DOCKER SERVICE
+  service:
+      name: docker
+      state: restarted
+
+- name: PULL IMAGES FOR KUBEADM
+  shell: kubeadm config images pull
+
+- name: Install IPROUTE-TC
+  package:
+      name: iproute-tc
+      state: present
+- name: BRIDGE COMMAND
+  shell: |
+           cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+           net.bridge.bridge-nf-call-ip6tables=1
+           net.bridge.bridge-nf-call-iptables=1
+           EOF
+
+- name: SYSCTL COMMAND
+  shell: sudo sysctl --system
+
+
+- name: INITIALISE CLUSTER
+  shell: kubeadm init --pod-network-cidr=10.240.0.0/16 --ignore-preflight-errors=NumCPU --ignore-preflight-errors=Mem
+
+- name: MAKING MASTER CLIENT
+  shell: mkdir -p $HOME/.kube
+- name: MAKING MASTER CLIENT
+  shell: sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+- name: MAKING MASTER CLIENT
+  shell: sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+- name: GET NODES
+  shell: kubectl get nodes
+  register: x
+- debug:
+      var: x
+
+- name: Createtoken
+  shell: kubeadm token create --print-join-command
+  register: join_cmd
+
+- name: SET FACT 
+  set_fact: 
+      join_command: "{{ join_cmd.stdout_lines[0] }}"

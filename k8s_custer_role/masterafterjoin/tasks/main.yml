@@ -1,0 +1,25 @@
+
+- name: INSTALL FLANNEL
+  shell:  kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+- name: GET NODES
+  shell: kubectl get nodes
+  register: z
+
+- debug:
+      var: z
+
+- name: COPY SUBNET.ENV FILE
+  copy:
+      dest: /var/run/flannel/
+      src: /root/cluster/subnet.env
+      
+- name: Restart PODS
+  shell: kubectl delete pod -l app=flannel -n kube-system
+
+- name: GET NODES
+  shell: kubectl get nodes
+  register: zz
+
+- debug:
+      var: zz

@@ -1,0 +1,7 @@
+---
+# vars file for webserver
+html_file_loc: "index.html"
+document_root: "/var/www/html"
+httpd_config_scr: "lw.conf"
+httpd_config_dest: "/etc/httpd/conf.d/lw.conf"
+port: 8080

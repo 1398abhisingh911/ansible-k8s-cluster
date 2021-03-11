@@ -1,0 +1,30 @@
+- name: COPY MYSQL.YML
+  copy:
+      dest: /root/
+      src: mysql.yml
+- name: COPY WORDPRESS.YML
+  copy:
+      dest: /root/
+      src: wordpress.yml
+- name: COPY SERVICE.YML 
+  copy:
+      dest: /root/
+      src: expose.yml
+
+- name: CREATE MYSQL POD
+  shell: kubectl create -f /root/mysql.yml
+- name: CREATE WORDPRESS POD
+  shell: kubectl create -f /root/wordpress.yml
+- name: EXPOSE WORDPRESS POD
+  shell: kubectl create -f /root/expose.yml
+- name: GET SERVICE 
+  shell: kubectl get svc
+  register: svc
+- debug: 
+      var: svc
+- name: DESCRIBE SERVICE 
+  shell: kubectl describe svc mylb1
+  register: svc2
+- debug: 
+      var: svc2
+  

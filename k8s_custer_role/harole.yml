@@ -1,0 +1,16 @@
+- hosts: master
+  roles: 
+   - masterbeforejoin
+ 
+- hosts: slave
+  roles: 
+   - slavesjoin
+
+- hosts: master
+  roles:
+   - masterafterjoin
+
+- hosts: master
+  roles:  
+   - sqlandwp 
+ 

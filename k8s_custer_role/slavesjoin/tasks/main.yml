@@ -1,0 +1,58 @@
+---
+- name: INSTALL DOCKER
+  package:
+      name: docker
+      state: present
+
+- name: START DOCKER SERVICE
+  service:
+      name: docker
+      state: started
+      enabled: yes
+
+- name: Copy Kubernetes Repo File
+  copy:
+      dest: /etc/yum.repos.d/
+      src: /root/cluster/kubernetes.repo
+
+- name: YUM UPDATION
+  shell: yum repolist -y
+
+- name: INSTALL KUBEADM
+  shell: yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+
+- name: START KUBELET SERVICE
+  service:
+      name: kubelet
+      state: started
+      enabled: yes
+
+- name: COPY DAEMON.JSON
+  copy:
+      dest: /etc/docker/
+      src: /root/cluster/daemon.json
+
+- name: RESTART DOCKER SERVICE
+  service:
+      name: docker
+      state: restarted
+
+- name: PULL IMAGES FOR KUBEADM
+  shell: kubeadm config images pull
+
+- name: Install IPROUTE-TC
+  package:
+      name: iproute-tc
+      state: present
+- name: BRIDGE COMMAND
+  shell: |
+           cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+           net.bridge.bridge-nf-call-ip6tables=1
+           net.bridge.bridge-nf-call-iptables=1
+           EOF
+
+- name: SYSCTL COMMAND
+  shell: sudo sysctl --system
+
+- name: SLAVES JOIN CLUSTER
+  shell: "{{ hostvars['master'].join_command }}"
